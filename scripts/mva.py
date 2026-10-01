@@ -36,6 +36,7 @@ INPUT_DIR = PROJECT_ROOT / "input"
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 DATA_DIR = PROJECT_ROOT / "data"
+VENV_PYTHON = PROJECT_ROOT / ".venv" / "bin" / "python"
 MVA_STATE_FILE = DATA_DIR / "mva_state.json"
 YOUTUBE_STATE_FILE = DATA_DIR / "youtube_state.json"
 
@@ -49,8 +50,15 @@ def pause(message: str = "Press Enter to continue...") -> None:
     input(f"\n{message}")
 
 
+def python_executable() -> str:
+    """Use the project's virtualenv automatically when it exists."""
+    if VENV_PYTHON.is_file() and os.access(VENV_PYTHON, os.X_OK):
+        return str(VENV_PYTHON)
+    return sys.executable
+
+
 def run_script(script_name: str, *args: str) -> None:
-    command = [sys.executable, str(SCRIPTS_DIR / script_name), *args]
+    command = [python_executable(), str(SCRIPTS_DIR / script_name), *args]
     print()
     print("=" * 72)
     print("RUNNING:", " ".join(shlex.quote(str(x)) for x in command))
@@ -210,8 +218,6 @@ def track_status(
     album_name: str,
     track: dict[str, Any],
 ) -> str:
-    number = parse_track_number(track.get("Track Number"))
-
     if youtube_uploaded(youtube_state, album_name, track):
         if video_path(album_name, track).is_file():
             return "COMPLETE"
@@ -397,8 +403,6 @@ def complete_track(
     mva_state: dict[str, Any],
     youtube_state: dict[str, Any],
 ) -> None:
-    number = parse_track_number(track.get("Track Number"))
-
     if youtube_uploaded(youtube_state, album, track):
         print("This track is already uploaded. Nothing to do.")
         return
@@ -419,7 +423,7 @@ def complete_track(
     if not thumbnail_path(album, track).is_file():
         generate_thumbnail(album, track)
 
-    if not youtube_uploaded(youtube_state, album, number):
+    if not youtube_uploaded(youtube_state, album, track):
         upload_track(album, track)
 
 
