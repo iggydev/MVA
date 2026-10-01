@@ -1,0 +1,20 @@
+# Local/runtime data
+/data/
+/data/*
+!/data/.gitkeep
+
+# Runtime working files
+/temp/
+/output/
+/logs/
+/input/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local credentials
+client_secret.json
+
+# Archived/old scripts
+/scripts/old/
