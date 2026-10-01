@@ -160,9 +160,23 @@ def file_sha256(path: Path) -> str:
 def youtube_uploaded(
     youtube_state: dict[str, Any],
     album_name: str,
-    track_number: int,
+    track: dict[str, Any],
 ) -> bool:
-    return track_key(album_name, track_number) in youtube_state.get("videos", {})
+    """Return True only when the saved YouTube record matches this track."""
+    number = parse_track_number(track.get("Track Number"))
+    key = track_key(album_name, number)
+    record = youtube_state.get("videos", {}).get(key)
+    if not isinstance(record, dict):
+        return False
+
+    # Track number is part of the key, but the title is an important guard
+    # against a reused track number after an album JSON is edited.
+    saved_title = str(record.get("title", "")).strip()
+    current_title = str(track.get("Title", "")).strip()
+    if saved_title and current_title and saved_title != current_title:
+        return False
+
+    return True
 
 
 def lyrics_status(
@@ -198,8 +212,10 @@ def track_status(
 ) -> str:
     number = parse_track_number(track.get("Track Number"))
 
-    if youtube_uploaded(youtube_state, album_name, number):
-        return "COMPLETE"
+    if youtube_uploaded(youtube_state, album_name, track):
+        if video_path(album_name, track).is_file():
+            return "COMPLETE"
+        return "UPLOADED - LOCAL FILES MISSING"
 
     if video_path(album_name, track).is_file():
         return "VIDEO READY"
@@ -231,6 +247,7 @@ def print_album_summary(
         status = track_status(mva_state, youtube_state, album, track)
         marker = {
             "COMPLETE": "✓",
+            "UPLOADED - LOCAL FILES MISSING": "✓",
             "APPROVED": "→",
             "VIDEO READY": "→",
             "NOT GENERATED": "★",
@@ -382,7 +399,7 @@ def complete_track(
 ) -> None:
     number = parse_track_number(track.get("Track Number"))
 
-    if youtube_uploaded(youtube_state, album, number):
+    if youtube_uploaded(youtube_state, album, track):
         print("This track is already uploaded. Nothing to do.")
         return
 
@@ -430,7 +447,7 @@ def track_menu(
         print(f"  Lyrics    : {lyrics_status(mva_state, album, track)}")
         print(f"  Video     : {'READY' if video_path(album, track).is_file() else 'NOT RENDERED'}")
         print(f"  Thumbnail : {'READY' if thumbnail_path(album, track).is_file() else 'NOT GENERATED'}")
-        print(f"  YouTube   : {'UPLOADED' if youtube_uploaded(youtube_state, album, number) else 'NOT UPLOADED'}")
+        print(f"  YouTube   : {'UPLOADED' if youtube_uploaded(youtube_state, album, track) else 'NOT UPLOADED'}")
         print()
         print(f"Overall: {status}")
         print()
