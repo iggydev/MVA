@@ -1,0 +1,24 @@
+{description}
+
+🎵 {title}
+
+{lyrics}
+
+__________________________
+
+🎵 Naslov: {title}
+💿 Album: {album}
+🔢 Pjesma br.: {track_number}
+🎼 Žanr: {genre}
+✍️ Autor: {artist}
+🎛️ Produkcija: Iggy4King
+🇭🇷 Jezik: Hrvatski
+🤖 Audio: AI Assisted
+
+__________________________
+
+🌐 {website}
+
+__________________________
+
+#KršćanskaGlazba #GospelHrvatska #LyricsVideo #Vjera #Isus #IsusJeKralj

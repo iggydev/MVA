@@ -1,0 +1,24 @@
+{title}
+{album}
+
+{description}
+
+Lyrics
+{lyrics}
+
+Artist: {artist}
+Album: {album}
+Track: {track_number}
+Genre: {genre}
+Language: {language}
+
+AI Credits
+This music was created with the assistance of generative AI.
+
+Credits 2
+Music and lyrics: {artist}
+
+Copyleft
+This work is released under the terms specified by the artist.
+
+{website}
