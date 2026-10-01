@@ -15,3 +15,6 @@ __pycache__/
 
 # Local credentials
 client_secret.json
+
+# Archived/old scripts
+/scripts/old/
