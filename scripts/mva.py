@@ -372,6 +372,35 @@ def upload_track(album: str, track: dict[str, Any]) -> None:
     run_script("upload_youtube.py", json_path.name, str(number))
 
 
+def confirm_guided_upload(album: str, track: dict[str, Any]) -> bool:
+    number = parse_track_number(track.get("Track Number"))
+    title = str(track.get("Title", "")).strip()
+    video = video_path(album, track)
+    thumbnail = thumbnail_path(album, track)
+
+    print()
+    print("=" * 72)
+    print("READY FOR YOUTUBE UPLOAD")
+    print("=" * 72)
+    print(f"Track     : {number:02d} - {title}")
+    print(f"Video     : {video}")
+    print(f"Thumbnail : {thumbnail}")
+    print()
+    print("Review the rendered video and thumbnail before uploading.")
+    print()
+    try:
+        answer = input("Press Enter to upload, or type N to cancel: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\nUpload cancelled.")
+        return False
+
+    if answer in ("n", "no", "q", "quit", "c", "cancel"):
+        print("Upload cancelled.")
+        return False
+
+    return True
+
+
 def find_album_json(album: str) -> Path:
     for path in INPUT_DIR.glob("*.json"):
         try:
@@ -424,7 +453,10 @@ def complete_track(
         generate_thumbnail(album, track)
 
     if not youtube_uploaded(youtube_state, album, track):
-        upload_track(album, track)
+        if confirm_guided_upload(album, track):
+            upload_track(album, track)
+        else:
+            print("Guided completion stopped before YouTube upload.")
 
 
 def track_menu(
