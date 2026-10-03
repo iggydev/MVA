@@ -1148,29 +1148,51 @@ def main():
         sys.exit(1)
     # -----------------------------------------------------------------------
     # Command-line track selection
+    #
+    # IMPORTANT:
+    # jobs.json contains only actual jobs. It may intentionally have gaps
+    # in track numbers (for example 1, 2, 3, 4, 11) while the unfinished
+    # tracks are not present yet. Track selection must therefore use the
+    # job's real track_number instead of treating the JSON list position as
+    # the album track number.
     # -----------------------------------------------------------------------
+    jobs_by_track = {}
+    for job in jobs:
+        try:
+            number = int(job["track_number"])
+        except (KeyError, TypeError, ValueError):
+            print(
+                f"ERROR: Invalid job without a valid track_number: {job!r}"
+            )
+            sys.exit(1)
+
+        if number in jobs_by_track:
+            print(
+                f"ERROR: Duplicate track number in jobs.json: {number}"
+            )
+            sys.exit(1)
+
+        jobs_by_track[number] = job
+
+    available_tracks = sorted(jobs_by_track)
+
     if args.tracks:
         selected_tracks = []
         for track_number in args.tracks:
-            if track_number < 1 or track_number > len(jobs):
+            if track_number not in jobs_by_track:
                 print(
-                    f"ERROR: Track {track_number} "
-                    f"is outside the available range "
-                    f"1-{len(jobs)}."
+                    f"ERROR: Track {track_number} is not present in jobs.json."
+                )
+                print(
+                    "Available track numbers: "
+                    f"{', '.join(map(str, available_tracks))}"
                 )
                 sys.exit(1)
-            selected_tracks.append(
-                track_number
-            )
+            selected_tracks.append(track_number)
     else:
-        # No track numbers:
-        # render the complete album.
-        selected_tracks = list(
-            range(
-                1,
-                len(jobs) + 1,
-            )
-        )
+        # No track numbers: render every actual job, in track-number order.
+        selected_tracks = available_tracks
+
     # -----------------------------------------------------------------------
     # Display batch plan
     # -----------------------------------------------------------------------
@@ -1179,14 +1201,18 @@ def main():
     print("LYRIC VIDEO BATCH RENDER")
     print("=" * 70)
     print(
-        f"Total jobs available : {len(jobs)}"
+        f"Jobs available        : {len(jobs)}"
     )
     print(
-        f"Tracks to render     : "
+        f"Track numbers available: "
+        f"{', '.join(map(str, available_tracks))}"
+    )
+    print(
+        f"Tracks to render      : "
         f"{', '.join(map(str, selected_tracks))}"
     )
     print(
-        f"Background           : {background}"
+        f"Background            : {background}"
     )
     print("=" * 70)
     print()
@@ -1196,13 +1222,13 @@ def main():
     completed = []
     failed = []
     for track_number in selected_tracks:
-        job = jobs[track_number - 1]
+        job = jobs_by_track[track_number]
         title = job["title"]
         album = job["album"]
         print()
         print("#" * 70)
         print(
-            f"TRACK {track_number}/{len(jobs)}"
+            f"TRACK {track_number}"
         )
         print(
             f"{album} - {title}"
